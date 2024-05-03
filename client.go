@@ -71,6 +71,23 @@ func (c *AuthentikClient) RetriveToken(code string, redirectUri string) (Token, 
 	return token, nil
 }
 
-func (c *AuthentikClient) GetUserInfo(accessToken string) (string, error) {
-	return "", nil
+func (c *AuthentikClient) GetUserInfo(accessToken string) (map[string]any, error) {
+	r, _ := http.NewRequest("GET", c.BaseURL+"/application/o/userinfo/", nil)
+	r.Header.Add("Authorization", "Bearer "+accessToken)
+	client := &http.Client{}
+	resp, err := client.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return nil, errors.New("Failed to get user info")
+	}
+	buf, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var userInfo map[string]any
+	json.Unmarshal(buf, &userInfo)
+	return userInfo, nil
 }
