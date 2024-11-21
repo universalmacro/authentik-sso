@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"strings"
@@ -55,6 +56,7 @@ func (c *AuthentikClient) RetriveToken(code string, redirectUri string) (Token, 
 	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {
+		slog.Error("Failed to RetriveToken", "message", err.Error())
 		return token, err
 	}
 	defer resp.Body.Close()
@@ -81,6 +83,12 @@ func (c *AuthentikClient) GetUserInfo(accessToken string) (map[string]any, error
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
+		body := ""
+		buf, err := io.ReadAll(resp.Body)
+		if err == nil {
+			body = string(buf)
+		}
+		slog.Error("Failed to get user info", "status", resp.StatusCode, "body", body)
 		return nil, errors.New("Failed to get user info")
 	}
 	buf, err := io.ReadAll(resp.Body)
